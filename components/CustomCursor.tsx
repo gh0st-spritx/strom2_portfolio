@@ -1,90 +1,111 @@
 'use client';
-import { useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
-import LoadingScreen from '@/components/LoadingScreen';
-import Navbar from '@/components/Navbar';
-import RainEffect from '@/components/RainEffect';
-import LightningStrike from '@/components/LightningStrike';
-import MusicToggle from '@/components/MusicToggle';
-import CustomCursor from '@/components/CustomCursor';
-import HomeSection from '@/components/sections/HomeSection';
-import AboutSection from '@/components/sections/AboutSection';
-import ProjectsSection from '@/components/sections/ProjectsSection';
-import CertificationsSection from '@/components/sections/CertificationsSection';
-import ContactSection from '@/components/sections/ContactSection';
+import { useEffect, useState } from 'react';
+import { motion, useSpring, useMotionValue } from 'motion/react';
 
-export default function Portfolio() {
-  const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState('Home');
-  const [lightningTrigger, setLightningTrigger] = useState(0);
-  const [displaySection, setDisplaySection] = useState('Home');
+export default function CustomCursor() {
+  const [isMobile, setIsMobile] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isPointer, setIsPointer] = useState(false);
 
-  const handleNavigate = (section: string) => {
-    if (section === activeSection) return;
-    setActiveSection(section);
-    setLightningTrigger(prev => prev + 1);
-  };
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
 
-  const handleLightningComplete = () => {
-    setDisplaySection(activeSection);
-  };
+  // Smooth out the movement
+  const springConfig = { damping: 25, stiffness: 150 };
+  const cursorX = useSpring(mouseX, springConfig);
+  const cursorY = useSpring(mouseY, springConfig);
 
-  const renderSection = () => {
-    switch (displaySection) {
-      case 'Home': return <HomeSection onNavigate={handleNavigate} />;
-      case 'About': return <AboutSection />;
-      case 'Projects': return <ProjectsSection />;
-      case 'Certifications': return <CertificationsSection />;
-      case 'Contact': return <ContactSection />;
-      default: return <HomeSection onNavigate={handleNavigate} />;
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+      if (!isVisible) setIsVisible(true);
+
+      // Check if hovering over a clickable element
+      const target = e.target as HTMLElement;
+      const isClickable = !!(
+        target.tagName === 'BUTTON' || 
+        target.tagName === 'A' || 
+        target.closest('button') || 
+        target.closest('a') ||
+        window.getComputedStyle(target).cursor === 'pointer'
+      );
+      
+      setIsPointer(isClickable);
+    };
+
+    const handleMouseLeave = () => setIsVisible(false);
+    const handleMouseEnter = () => setIsVisible(true);
+
+    checkMobile();
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('mouseenter', handleMouseEnter);
+    window.addEventListener('resize', checkMobile);
+
+    // Hide default cursor globally
+    if (!isMobile) {
+      document.body.style.cursor = 'none';
+      const style = document.createElement('style');
+      style.innerHTML = `
+        a, button, [role="button"] {
+          cursor: none !important;
+        }
+      `;
+      document.head.appendChild(style);
     }
-  };
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('mouseenter', handleMouseEnter);
+      window.removeEventListener('resize', checkMobile);
+      document.body.style.cursor = 'auto';
+    };
+  }, [mouseX, mouseY, isVisible, isMobile]);
+
+  if (isMobile || !isVisible) return null;
 
   return (
-    <main className="relative w-full h-screen overflow-hidden bg-black">
-      <AnimatePresence>
-        {loading && <LoadingScreen onComplete={() => setLoading(false)} />}
-      </AnimatePresence>
-
-      {!loading && (
-        <>
-          {/* Background Video */}
-          <video 
-            autoPlay 
-            loop 
-            muted 
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-screen"
-          >
-            <source src="/strom.mp4" type="video/mp4" />
-          </video>
-
-          {/* Global Effects */}
-          <CustomCursor />
-          <RainEffect />
-          <LightningStrike trigger={lightningTrigger} onComplete={handleLightningComplete} />
-          
-          {/* UI Elements */}
-          <Navbar activeSection={activeSection} onNavigate={handleNavigate} />
-          <MusicToggle />
-
-          {/* Main Content Area */}
-          <div className="relative z-20 w-full h-full pt-24 pb-12 overflow-y-auto">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={displaySection}
-                initial={{ opacity: 0, filter: 'blur(10px)' }}
-                animate={{ opacity: 1, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, filter: 'blur(10px)' }}
-                transition={{ duration: 0.5 }}
-                className="min-h-full"
-              >
-                {renderSection()}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </>
-      )}
-    </main>
+    <motion.div
+      className="fixed top-0 left-0 z-[9999] pointer-events-none"
+      style={{
+        x: cursorX,
+        y: cursorY,
+        translateX: '-50%',
+        translateY: '-50%',
+      }}
+    >
+      {/* Japanese Maple Leaf SVG */}
+      <motion.svg
+        width="32"
+        height="32"
+        viewBox="0 0 100 100"
+        animate={{
+          scale: isPointer ? 1.5 : 1,
+          rotate: isPointer ? 45 : 0,
+          filter: isPointer ? 'drop-shadow(0 0 8px rgba(220, 38, 38, 0.8))' : 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.5))'
+        }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        className="text-red-600 fill-current"
+      >
+        <path d="M50 95C50 95 48 70 48 65C48 60 52 60 52 65C52 70 50 95 50 95Z" />
+        <path d="M50 65L20 75L35 55L10 45L35 35L20 15L50 30L80 15L65 35L90 45L65 55L80 75L50 65Z" />
+        <path d="M50 65L35 85L45 65L50 65ZM50 65L65 85L55 65L50 65Z" />
+        <path d="M50 30L50 5L45 25L50 30ZM50 30L50 5L55 25L50 30Z" />
+      </motion.svg>
+      
+      {/* Subtle glow trail */}
+      <motion.div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-red-500/20 rounded-full blur-md"
+        animate={{
+          scale: isPointer ? 2.5 : 1,
+        }}
+      />
+    </motion.div>
   );
 }
