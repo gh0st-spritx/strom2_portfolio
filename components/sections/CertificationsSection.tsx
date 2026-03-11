@@ -5,7 +5,7 @@ import { ExternalLink } from 'lucide-react';
 const certs = [
   { name: "IELTS Band 7", link: "/ielts.pdf" },
   { name: "CompTIA ITF+", link: "https://www.credly.com/badges/68e47d7c-0fbc-4641-99ba-014990668bde/public_url" },
-  { name: "Google AI Professional Certificate", link: "/Ai.pdf" }
+  { name: "Google AI Professional Certificate", link: "/ai.pdf" }
 ];
 
 export default function CertificationsSection() {
