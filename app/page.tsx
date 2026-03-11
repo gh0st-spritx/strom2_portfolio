@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import RainEffect from '@/components/RainEffect';
 import LightningStrike from '@/components/LightningStrike';
 import MusicToggle from '@/components/MusicToggle';
+import CustomCursor from '@/components/CustomCursor';
 import HomeSection from '@/components/sections/HomeSection';
 import AboutSection from '@/components/sections/AboutSection';
 import ProjectsSection from '@/components/sections/ProjectsSection';
@@ -59,6 +60,7 @@ export default function Portfolio() {
           </video>
 
           {/* Global Effects */}
+          <CustomCursor />
           <RainEffect />
           <LightningStrike trigger={lightningTrigger} onComplete={handleLightningComplete} />
           
